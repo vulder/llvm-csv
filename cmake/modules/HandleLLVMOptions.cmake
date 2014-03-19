@@ -46,6 +46,10 @@ int main() { return (float)x; }"
   endif()
 endif()
 
+if(LLVM_CSV_OUTPUT)
+  add_definitions( -DLLVM_CSV_OUTPUT)
+endif()
+
 if( LLVM_ENABLE_ASSERTIONS )
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   if( NOT MSVC )

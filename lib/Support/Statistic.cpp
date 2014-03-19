@@ -31,6 +31,14 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstring>
+
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/ToolOutputFile.h"
+#include <sstream>
+#include <ctime>
+
+#include <iostream>
+
 using namespace llvm;
 
 // CreateInfoOutputFile - Return a file stream to print our output on.
@@ -44,6 +52,9 @@ Enabled(
     "stats",
     cl::desc("Enable statistics output from program (available with Asserts)"));
 
+static cl::opt<std::string>
+PrintCSV("csv", cl::desc("Print Results as CSV"),cl::value_desc("filename"));
+
 
 namespace {
 /// StatisticInfo - This class is used in a ManagedStatic so that it is created
@@ -53,6 +64,7 @@ class StatisticInfo {
   std::vector<const Statistic*> Stats;
   friend void llvm::PrintStatistics();
   friend void llvm::PrintStatistics(raw_ostream &OS);
+  friend void llvm::PrintStatisticsToCSV();
 public:
   ~StatisticInfo();
 
@@ -87,6 +99,7 @@ void Statistic::RegisterStatistic() {
 // Print information when destroyed, iff command line option is specified.
 StatisticInfo::~StatisticInfo() {
   llvm::PrintStatistics();
+  llvm::PrintStatisticsToCSV();
 }
 
 void llvm::EnableStatistics() {
@@ -159,5 +172,45 @@ void llvm::PrintStatistics() {
     OutStream.flush();
     delete &OutStream;   // Close the file.
   }
+#endif
+}
+
+void llvm::PrintStatisticsToCSV() {
+#if defined(LLVM_CSV_OUTPUT)
+  if(!PrintCSV.empty()) {
+    std::cout << "PrintCSV is set and is: " << PrintCSV.c_str() << std::endl;
+
+    // open file
+    std::stringstream path;
+    path  << PrintCSV << ".csv";
+    std::string ErrorInfo;
+    OwningPtr<tool_output_file> Out;
+    Out.reset(new tool_output_file(path.str().c_str(), ErrorInfo, sys::fs::F_Append));
+    raw_fd_ostream &ostremo = Out->os();
+
+    time_t t = time(0);
+    struct tm* now = localtime(&t);
+    // generate timestamp
+    std::stringstream ts;
+    ts << (now->tm_year + 1900) << "-";
+    ts << (now->tm_mon + 1) << "-";
+    ts << now->tm_mday << "-";
+    ts << now->tm_hour << ":";
+    ts << now->tm_min << "\n";
+    
+    // printing results
+    StatisticInfo &Stats = *StatInfo;
+    for(size_t i = 0, e = Stats.Stats.size(); i != e; ++i) {
+      ostremo << PrintCSV << ",";
+      ostremo << Stats.Stats[i]->getName() << ",";
+      ostremo << Stats.Stats[i]->getVarName() << ",";
+      ostremo << Stats.Stats[i]->getValue() << ",";
+      ostremo << Stats.Stats[i]->getDesc() << ",";
+      ostremo << ts.str();
+
+    }  
+    Out->keep();
+  }
+#else
 #endif
 }

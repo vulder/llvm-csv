@@ -38,6 +38,10 @@ public:
   const char *Desc;
   volatile llvm::sys::cas_flag Value;
   bool Initialized;
+#if defined(LLVM_CSV_OUTPUT)
+  const char *VarName;
+  const char *getVarName() const { return VarName; }
+#endif
 
   llvm::sys::cas_flag getValue() const { return Value; }
   const char *getName() const { return Name; }
@@ -161,8 +165,13 @@ protected:
 
 // STATISTIC - A macro to make definition of statistics really simple.  This
 // automatically passes the DEBUG_TYPE of the file into the statistic.
-#define STATISTIC(VARNAME, DESC) \
-  static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
+#if !defined(LLVM_CSV_OUTPUT)
+  #define STATISTIC(VARNAME, DESC) \
+    static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
+#else
+  #define STATISTIC(VARNAME, DESC) \
+    static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 , #VARNAME }
+#endif
 
 /// \brief Enable the collection and printing of statistics.
 void EnableStatistics();
@@ -175,6 +184,9 @@ void PrintStatistics();
 
 /// \brief Print statistics to the given output stream.
 void PrintStatistics(raw_ostream &OS);
+
+/// \brief Print statistics to the Database
+void PrintStatisticsToCSV();
 
 } // End llvm namespace
 

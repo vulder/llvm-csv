@@ -287,6 +287,9 @@ option (LLVM_ENABLE_DOXYGEN "Use doxygen to generate llvm documentation." OFF)
 option (LLVM_BUILD_EXTERNAL_COMPILER_RT
   "Build compiler-rt as an external project." OFF)
 
+# mystuff
+option (LLVM_CSV_OUTPUT "Build LLVM with csv-stat generation option" OFF)
+
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
 # first cmake run
