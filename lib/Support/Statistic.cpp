@@ -52,8 +52,10 @@ Enabled(
     "stats",
     cl::desc("Enable statistics output from program (available with Asserts)"));
 
+#if defined(LLVM_CSV_OUTPUT)
 static cl::opt<std::string>
 PrintCSV("csv", cl::desc("Print Results as CSV"),cl::value_desc("filename"));
+#endif
 
 
 namespace {
