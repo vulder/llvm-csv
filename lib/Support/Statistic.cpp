@@ -37,8 +37,6 @@
 #include <sstream>
 #include <ctime>
 
-#include <iostream>
-
 using namespace llvm;
 
 // CreateInfoOutputFile - Return a file stream to print our output on.
@@ -180,12 +178,16 @@ void llvm::PrintStatistics() {
 void llvm::PrintStatisticsToCSV() {
 #if defined(LLVM_CSV_OUTPUT)
   if(!PrintCSV.empty()) {
+    raw_ostream &OutStream = *CreateInfoOutputFile();
+
     std::stringstream path;
     path  << PrintCSV << ".csv";
     std::string ErrorInfo;
     OwningPtr<tool_output_file> Out;
     Out.reset(new tool_output_file(path.str().c_str(), ErrorInfo, sys::fs::F_Append));
     raw_fd_ostream &ostremo = Out->os();
+
+    OutStream << "Writing to File " << path.str() << "\n" ;
 
     time_t t = time(0);
     struct tm* now = localtime(&t);
@@ -209,6 +211,7 @@ void llvm::PrintStatisticsToCSV() {
 
     }  
     Out->keep();
+    delete &OutStream;
   }
 #else
 #endif
