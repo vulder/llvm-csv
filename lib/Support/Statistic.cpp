@@ -185,29 +185,26 @@ void llvm::PrintStatisticsToCSV() {
     std::string ErrorInfo;
     OwningPtr<tool_output_file> Out;
     Out.reset(new tool_output_file(path.str().c_str(), ErrorInfo, sys::fs::F_Append));
-    raw_fd_ostream &ostremo = Out->os();
+    raw_fd_ostream &ostream = Out->os();
 
     OutStream << "Writing to File " << path.str() << "\n" ;
 
-    time_t t = time(0);
-    struct tm* now = localtime(&t);
-    // generate timestamp
-    std::stringstream ts;
-    ts << (now->tm_year + 1900) << "-";
-    ts << (now->tm_mon + 1) << "-";
-    ts << now->tm_mday << "-";
-    ts << now->tm_hour << ":";
-    ts << now->tm_min << "\n";
+    time_t rawtime;
+    struct tm* timeinfo;
+    char timestamp [20];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(timestamp,20,"%F-%R", timeinfo);
     
     // printing results
     StatisticInfo &Stats = *StatInfo;
     for(size_t i = 0, e = Stats.Stats.size(); i != e; ++i) {
-      ostremo << PrintCSV << ",";
-      ostremo << Stats.Stats[i]->getName() << ",";
-      ostremo << Stats.Stats[i]->getVarName() << ",";
-      ostremo << Stats.Stats[i]->getValue() << ",";
-      ostremo << Stats.Stats[i]->getDesc() << ",";
-      ostremo << ts.str();
+      ostream << PrintCSV << ",";
+      ostream << Stats.Stats[i]->getName() << ",";
+      ostream << Stats.Stats[i]->getVarName() << ",";
+      ostream << Stats.Stats[i]->getValue() << ",";
+      ostream << Stats.Stats[i]->getDesc() << ",";
+      ostream << timestamp << "\n";
 
     }  
     Out->keep();
