@@ -180,9 +180,6 @@ void llvm::PrintStatistics() {
 void llvm::PrintStatisticsToCSV() {
 #if defined(LLVM_CSV_OUTPUT)
   if(!PrintCSV.empty()) {
-    std::cout << "PrintCSV is set and is: " << PrintCSV.c_str() << std::endl;
-
-    // open file
     std::stringstream path;
     path  << PrintCSV << ".csv";
     std::string ErrorInfo;
