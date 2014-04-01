@@ -176,40 +176,43 @@ void llvm::PrintStatistics() {
 }
 
 void llvm::PrintStatisticsToCSV() {
-#if defined(LLVM_CSV_OUTPUT)
-  if(!PrintCSV.empty()) {
-    raw_ostream &OutStream = *CreateInfoOutputFile();
-
-    std::stringstream path;
-    path  << PrintCSV << ".csv";
+#if !defined(NDEBUG) && defined(LLVM_ENABLE_STATS) && defined(LLVM_CSV_OUTPUT)
+  if (!PrintCSV.empty()) {
+    std::shared_ptr<raw_ostream> OutStream = CreateInfoOutputFile();
+    std::stringstream Path;
     std::string ErrorInfo;
     OwningPtr<tool_output_file> Out;
-    Out.reset(new tool_output_file(path.str().c_str(), ErrorInfo, sys::fs::F_Append));
-    raw_fd_ostream &ostream = Out->os();
 
-    OutStream << "Writing to File " << path.str() << "\n" ;
+    Path << PrintCSV << ".csv";
+    Out.reset(
+        new tool_output_file(Path.str().c_str(), ErrorInfo, sys::fs::F_Append));
 
-    time_t rawtime;
-    struct tm* timeinfo;
-    char timestamp [20];
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(timestamp,20,"%F-%R", timeinfo);
-    
-    // printing results
-    StatisticInfo &Stats = *StatInfo;
-    for(size_t i = 0, e = Stats.Stats.size(); i != e; ++i) {
-      ostream << PrintCSV << ",";
-      ostream << Stats.Stats[i]->getName() << ",";
-      ostream << Stats.Stats[i]->getVarName() << ",";
-      ostream << Stats.Stats[i]->getValue() << ",";
-      ostream << Stats.Stats[i]->getDesc() << ",";
-      ostream << timestamp << "\n";
+    raw_fd_ostream &Ostream = Out->os();
 
-    }  
+    *OutStream << "Writing to File " << path.str() << "\n";
+
+    time_t Rawtime;
+    struct tm *Timeinfo;
+    char Timestamp[18];
+
+    Time(&rawtime);
+    Timeinfo = localtime(&Rawtime);
+    int Error = strftime(Timestamp, 18, "%F-%R", Timeinfo);
+    if (!Error) {
+      // printing results
+      StatisticInfo &Stats = *StatInfo;
+      for (size_t i = 0, e = Stats.Stats.size(); i != e; ++i) {
+        Ostream << PrintCSV << ",";
+        Ostream << Stats.Stats[i]->getName() << ",";
+        Ostream << Stats.Stats[i]->getVarName() << ",";
+        Ostream << Stats.Stats[i]->getValue() << ",";
+        Ostream << Stats.Stats[i]->getDesc() << ",";
+        Ostream << Timestamp << "\n";
+      }
+    }
+
+    OutStream->flush();
     Out->keep();
-    delete &OutStream;
   }
-#else
 #endif
 }
